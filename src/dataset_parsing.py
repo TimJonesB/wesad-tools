@@ -20,6 +20,7 @@ https://archive.ics.uci.edu/ml/datasets/WESAD+%28Wearable+Stress+and+Affect+Dete
 import numpy as np
 import pickle
 import h5py
+from feature_editing import FeatureDesigner
 
 class DataInfo:
     """
@@ -97,7 +98,8 @@ class DataProducer:
         """
         Extracts segment specific to certain index range [i:i+steps_segment].
         """
-    
+        feature_designer = FeatureDesigner()
+        
         segment = {}
         for sig in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
             whole_series = self.data['signal']['chest'][sig]
@@ -149,12 +151,11 @@ if __name__ == '__main__':
 
     sample = {}
 
-    with h5py.File('formatted_data.h5','w') as fout:
+    with h5py.File(r'../data/formatted_data.h5','w') as fout:
         fout.attrs['sample_count'] = 0
         for idx in data_info.data_idx:
 
-            datapath = (r"/media/tim/S3DL/Datasets/"
-                         "WESAD/S{}/S{}.pkl").format(idx,idx)
+            datapath = r"../data/WESAD/S{}/S{}.pkl".format(idx,idx)
 
             print("Parsing {}".format(datapath))
 

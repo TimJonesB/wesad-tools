@@ -102,22 +102,22 @@ if __name__ == '__main__':
 
     data_features = [
                      'chestACC0',
-                     'chestACC1',
-                     'chestACC2',
+                     #'chestACC1',
+                     #'chestACC2',
                      'chestECG',
-                     'chestEDA',
-                     'chestEMG',
-                     'chestResp',
+                     #'chestEDA',
+                     #'chestEMG',
+                     #'chestResp',
                      'chestTemp',
                      'wristACC0',
-                     'wristACC1',
-                     'wristACC2',
-                     'wristBVP',
-                     'wristEDA',
+                     #'wristACC1',
+                     #'wristACC2',
+                     #'wristBVP',
+                     #'wristEDA',
                      'wristTEMP',
                    ]
 
-    dfile = 'formatted_data.h5'
+    dfile = r'../data/formatted_data.h5'
     d = DataHandler(dfile).get_data_sets(data_features)
 
 
