@@ -8,12 +8,10 @@ Created on Wed Jan  1 17:48:25 2020
 
 import numpy as np
 
-import pandas
+import pandas as pd
 
 class FeatureDesigner:
-    
-                 
-    def edit_feature(data,feature_name):
+    def edit_feature(self, feature_name, data):
         designer_map = {
                      'chestACC0' : self.acc_designer,
                      'chestACC1' : self.acc_designer,
@@ -26,33 +24,51 @@ class FeatureDesigner:
                      'wristACC0' : self.acc_designer,
                      'wristACC1' : self.acc_designer,
                      'wristACC2' : self.acc_designer,
-                     'wristBVP'  : self.bvp_designer,
                      'wristEDA'  : self.eda_designer,
                      'wristTEMP' : self.temp_designer,
                      }
-        return designer_map[feature_name](data)
+        return designer_map[feature_name](feature_name,data)
 
-    def acc_designer(data):
-        return 2
+    def acc_designer(self, feature_name, data):
+        win_sz = 40
+        return {
+            '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
+            '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
+        }
 
-    def ecg_designer(data):
-        None
+    def ecg_designer(self, feature_name, data):
+        win_sz = 40
+        return {
+            '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
+            '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
+        }
         
-    def eda_designer(data):
-        None
+    def eda_designer(self, feature_name, data):
+        win_sz = 40
+        return {
+            '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
+            '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
+        }
     
-    def emg_designer(data):
-        None
+    def emg_designer(self, feature_name, data):
+        win_sz = 40
+        return {
+            '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
+            '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
+        }
     
-    def resp_designer(data):
-        None
+    def resp_designer(self, feature_name, data):
+        win_sz = 40
+        return {
+            '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
+            '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
+        }
 
-    def temp_designer(data):
-        None
-    
-    def bvp_designer(data):
-        None
-    
-        
+    def temp_designer(self, feature_name, data):
+        win_sz = 40
+        return {
+            '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
+            '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
+        }
 
     
