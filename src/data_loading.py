@@ -12,11 +12,11 @@ from sklearn.utils import class_weight
 
 
 class DataHandler:
-    def __init__(self,data_filepath):
+    def __init__(self, data_filepath):
         self.data_filepath = data_filepath
-        self.data = h5py.File(data_filepath,'r')
+        self.data = h5py.File(data_filepath, 'r')
 
-    
+
     def get_data_indices(self, percent_train = 0.75):
         data_indices = [int(key.lstrip('Sample')) for key in self.data]
         n = max(data_indices)
@@ -35,7 +35,8 @@ class DataHandler:
         for i, index in enumerate(indices):
             data_labels[i] = self.data['Sample{}'.format(index)].attrs['label']
         data_labels_list = list(set(data_labels))
-        normalize_label = {data_labels_list[i]: i for i in range(len(data_labels_list))}
+        normalize_label = {data_labels_list[i]: i for i in range(
+                                                        len(data_labels_list))}
         return [normalize_label[i] for i in data_labels]
     
     
@@ -47,12 +48,13 @@ class DataHandler:
     
     
     def get_data(self, indices, data_features):
-        data_set = np.zeros((len(indices),4200,len(data_features)))
+        data_set = np.zeros((len(indices), 4200, len(data_features)))
         for i,index in enumerate(indices):
-            data_set[i, :, :] = self.get_sample('Sample{}'.format(index), data_features)
+            data_set[i, :, :] = self.get_sample('Sample{}'.format(index),
+                                                data_features)
         return data_set
-    
-    
+
+
     def get_data_sets(self, data_features):
         """
         Data comes in the form 
@@ -75,13 +77,14 @@ class DataHandler:
         indices = self.get_data_indices()
         train_idx = indices['train']
         test_idx = indices['test']
-    
+
         return  {
             'x_train' : self.get_data(train_idx, data_features),
             'y_train': self.get_labels(train_idx),
             'x_test'  : self.get_data(test_idx, data_features),
             'y_test': self.get_labels(test_idx)
         }
+
 
     def get_label_count(self):
         labels = [self.data[key].attrs['label'] for key in self.data]
@@ -90,37 +93,11 @@ class DataHandler:
             label_count[label] += 1
         return label_count
 
-    def compute_class_weights(y_train):
+
+    def compute_class_weights(self, y_train):
         return class_weight.compute_class_weight('balanced',
                                                   np.unique(y_train),
                                                   y_train)
-
-
-
-if __name__ == '__main__':
-    print('Loading Data...')
-
-    data_features = [
-                     'chestACC0',
-                     #'chestACC1',
-                     #'chestACC2',
-                     'chestECG',
-                     #'chestEDA',
-                     #'chestEMG',
-                     #'chestResp',
-                     'chestTemp',
-                     'wristACC0',
-                     #'wristACC1',
-                     #'wristACC2',
-                     #'wristBVP',
-                     #'wristEDA',
-                     'wristTEMP',
-                   ]
-
-    dfile = r'../data/formatted_data.h5'
-    d = DataHandler(dfile).get_data_sets(data_features)
-
-
 
 
 

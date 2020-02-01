@@ -29,7 +29,7 @@ class DataInfo:
     :param: data_idx = sample labels
     :param: sampling_freq_hz = sampling frequency (hz) of data signals
     """
-    
+
     data_idx = ['2', '3', '4', '5', '6',
                 '7', '8', '9', '10', '11',
                 '13', '14', '15', '16', '17']
@@ -43,7 +43,7 @@ class DataInfo:
         },
         'wrist' : {
             'ACC'  : 32,
-            'BVP'  : 64, 
+            'BVP'  : 64,
             'EDA'  : 4,
             'TEMP' : 4
         }
@@ -73,7 +73,7 @@ class DataProducer:
         :param: data : data from data file
         :param: label_fs : sampling rate of label and chest data
         """
-        
+
         wrist_data = self.data['signal']['wrist']
         labels = self.data['label']
         upsampled_wrist_data = {}
@@ -83,7 +83,7 @@ class DataProducer:
             fs = self.data_info.fs_hz['wrist'][signal_name]
             time_upsamp = np.arange(0, len(labels)*(1/label_fs), 1/label_fs)
             time_signal = np.arange(0, len(signal)*(1/fs), 1/fs)
-            
+
             # Able to handle multidimensional data ie 'ACC' (Accelerometer)
             sig_upsamp = np.zeros((len(labels), signal.shape[1]))
             for i, sig in enumerate(signal.T):
@@ -98,7 +98,7 @@ class DataProducer:
         """
         Extracts segment specific to certain index range [i:i+steps_segment].
         """
-        
+
         segment = {}
         for sig in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
             whole_series = self.data['signal']['chest'][sig]
@@ -110,7 +110,7 @@ class DataProducer:
                                                             steps_segment)]
             else:
                 segment['chest' + sig] = whole_series[i:i+steps_segment, 0]
-                
+
         for sig in ['ACC', 'EDA', 'TEMP']:
             whole_series = self.data['signal']['wrist_upsampled'][sig]
             #break down Accelerometer data into three seperate vectors 
@@ -121,20 +121,20 @@ class DataProducer:
                                                             steps_segment)]
             else:
                 segment['wrist' + sig] = whole_series[i:i+steps_segment, 0]
-        
+
         return segment
-    
-    
+
+
     def is_valid_segment(self, i, steps_segment):
         """
-        Checks that segment has no label/state change and that there are no 
+        Checks that segment has no label/state change and that there are no
         invalid labels (ie 0, 5, 6, 7)
-    
-        0 = not defined / transient, 
-        1 = baseline, 
-        2 = stress, 
+
+        0 = not defined / transient,
+        1 = baseline,
+        2 = stress,
         3 = amusement,
-        4 = meditation, 
+        4 = meditation,
         5/6/7 = should be ignored in this dataset
         """
 
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     steps_sample = data_info.label_data_fs * custom_settings.segment_duration
 
-    output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), 
+    output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ),
                                                '..', 
                                                'data',
                                                'formatted_data_feat.h5'))
@@ -158,15 +158,14 @@ if __name__ == '__main__':
         fout.attrs['sample_count'] = 0
         for idx in data_info.data_idx:
 
-                                                   
             data_path = os.path.abspath(os.path.join(
-                                            os.path.dirname( __file__ ),   
-                                            '..', 
+                                            os.path.dirname( __file__ ),
+                                            '..',
                                             'data',
                                             'WESAD',
                                             'S{}'.format(idx),
                                             'S{}.pkl'.format(idx)))
-  
+
             print("Parsing {}".format(data_path))
 
             producer = DataProducer(data_path, data_info, custom_settings)
@@ -185,7 +184,7 @@ if __name__ == '__main__':
 
                     for component in sample:
                         feat_vecs = designer.edit_feature(component,
-                                                          sample[component])  
+                                                          sample[component])
                         for feat in feat_vecs:
                             grp.create_dataset(feat, data=feat_vecs[feat])
 

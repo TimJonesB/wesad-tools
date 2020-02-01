@@ -7,8 +7,8 @@ Created on Wed Jan  1 17:48:25 2020
 """
 
 import numpy as np
-
 import pandas as pd
+
 
 class FeatureDesigner:
     def edit_feature(self, feature_name, data):
@@ -27,7 +27,8 @@ class FeatureDesigner:
                      'wristEDA'  : self.eda_designer,
                      'wristTEMP' : self.temp_designer,
                      }
-        return designer_map[feature_name](feature_name,data)
+        return designer_map[feature_name](feature_name, data)
+
 
     def acc_designer(self, feature_name, data):
         win_sz = 40
@@ -36,27 +37,31 @@ class FeatureDesigner:
             '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
         }
 
+
     def ecg_designer(self, feature_name, data):
         win_sz = 40
         return {
             '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
             '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
         }
-        
+
+
     def eda_designer(self, feature_name, data):
         win_sz = 40
         return {
             '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
             '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
         }
-    
+
+
     def emg_designer(self, feature_name, data):
         win_sz = 40
         return {
             '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
             '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
         }
-    
+
+
     def resp_designer(self, feature_name, data):
         win_sz = 40
         return {
@@ -64,11 +69,10 @@ class FeatureDesigner:
             '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
         }
 
+
     def temp_designer(self, feature_name, data):
         win_sz = 40
         return {
             '{}Mean'.format(feature_name) :  pd.Series(data).rolling(win_sz).mean(),
             '{}Std'.format(feature_name)  :  pd.Series(data).rolling(win_sz).std()
         }
-
-    
