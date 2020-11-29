@@ -5,9 +5,10 @@ Created on Mon Nov  4 11:26:12 2019
 
 @author: tim
 
-:
 https://archive.ics.uci.edu/ml/datasets/WESAD+%28Wearable+Stress+and+Affect+Detection%29
-[1] Philip Schmidt, Attila Reiss, Robert Duerichen, Claus Marberger and Kristof Van Laerhoven. 2018. Introducing WESAD, a multimodal dataset for Wearable Stress and Affect Detection. In 2018 International Conference on Multimodal Interaction (ICMI â€™18), October 16â€“20, 2018, Boulder, CO, USA. ACM, New York, NY, USA, 9 pages.
+[1] Philip Schmidt, Attila Reiss, Robert Duerichen, Claus Marberger and Kristof Van Laerhoven. 2018. 
+Introducing WESAD, a multimodal dataset for Wearable Stress and Affect Detection. In 2018 International 
+Conference on Multimodal Interaction (ICMI â€™18), October 16â€“20, 2018, Boulder, CO, USA. ACM, New York, NY, USA, 9 pages.
 
 0 = not defined / transient, 
 1 = baseline, 
@@ -29,14 +30,11 @@ class DataInfo:
     :param: data_idx = sample labels
     :param: sampling_freq_hz = sampling frequency (hz) of data signals
     """
-
     data_idx = ['2', '3', '4', '5', '6',
                 '7', '8', '9', '10', '11',
                 '13', '14', '15', '16', '17']
-
     label_data_fs = 700
-
-    fs_hz = { #see readme
+    fs_hz = { #see README
         'chest' : {
             signal : 700 for signal in ['ACC', 'ECG', 'EMG',
                                         'EDA', 'Temp', 'Resp']
@@ -51,8 +49,8 @@ class DataInfo:
 
 
 class CustomSettings:
-    segment_duration = 6
-    valid_classes = [1, 2, 3]
+    segment_duration = 15 # seconds
+    valid_classes = (1, 2) # classes to include in analysis
 
 
 class DataProducer:
@@ -61,7 +59,7 @@ class DataProducer:
         self.data_info = data_info
         self.custom_settings = custom_settings
         with open(data_filepath, 'rb') as f:
-            self.data = pickle.load(f, encoding = 'latin1')
+            self.data = pickle.load(f, encoding='latin1')
 
 
     def upsample_wrist_data(self, label_fs=700):
@@ -98,7 +96,6 @@ class DataProducer:
         """
         Extracts segment specific to certain index range [i:i+steps_segment].
         """
-
         segment = {}
         for sig in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
             whole_series = self.data['signal']['chest'][sig]
@@ -106,8 +103,7 @@ class DataProducer:
             #vectors ACC0, ACC1, etc
             if whole_series.shape[1] > 1:
                 for i, vec in enumerate(whole_series.T):
-                     segment['chest'+sig+'{}'.format(i)] = vec[i:(i +
-                                                            steps_segment)]
+                     segment['chest'+sig+'{}'.format(i)] = vec[i:(i + steps_segment)]
             else:
                 segment['chest' + sig] = whole_series[i:i+steps_segment, 0]
 
@@ -117,8 +113,7 @@ class DataProducer:
             # ie ACC0, ACC1, ...
             if whole_series.shape[1] > 1:
                 for i, vec in enumerate(whole_series.T):
-                     segment['wrist' + sig + '{}'.format(i)] = vec[i:(i +
-                                                            steps_segment)]
+                     segment['wrist' + sig + '{}'.format(i)] = vec[i:(i + steps_segment)]
             else:
                 segment['wrist' + sig] = whole_series[i:i+steps_segment, 0]
 
@@ -137,10 +132,8 @@ class DataProducer:
         4 = meditation,
         5/6/7 = should be ignored in this dataset
         """
-
         return (len(set(self.data['label'][i:i+steps_segment])) == 1 and
-                self.data['label'][i:i+steps_segment][0] in
-                    self.custom_settings.valid_classes)
+                self.data['label'][i:i+steps_segment][0] in self.custom_settings.valid_classes)
 
 
 if __name__ == '__main__':
@@ -156,16 +149,14 @@ if __name__ == '__main__':
                                                'formatted_data_feat.h5'))
     with h5py.File(output_path, 'w') as fout:
         fout.attrs['sample_count'] = 0
+        fout.attrs['sample_timesteps'] = steps_sample
         for idx in data_info.data_idx:
-
-            data_path = os.path.abspath(os.path.join(
-                                            os.path.dirname( __file__ ),
-                                            '..',
-                                            'data',
-                                            'WESAD',
-                                            'S{}'.format(idx),
-                                            'S{}.pkl'.format(idx)))
-
+            data_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ),
+                                                     '..',
+                                                     'data',
+                                                     'WESAD',
+                                                     'S{}'.format(idx),
+                                                     'S{}.pkl'.format(idx)))
             print("Parsing {}".format(data_path))
 
             producer = DataProducer(data_path, data_info, custom_settings)
@@ -179,8 +170,7 @@ if __name__ == '__main__':
                     group_name = 'Sample{}'.format(fout.attrs['sample_count'])
                     grp = fout.create_group(group_name)
 
-                    grp.attrs['label'] = producer.data['label'][i:(
-                                                           i+steps_sample)][0]
+                    grp.attrs['label'] = producer.data['label'][i:i+steps_sample][0]
 
                     for component in sample:
                         feat_vecs = designer.edit_feature(component,

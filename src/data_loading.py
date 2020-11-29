@@ -15,9 +15,9 @@ class DataHandler:
     def __init__(self, data_filepath):
         self.data_filepath = data_filepath
         self.data = h5py.File(data_filepath, 'r')
+        self.timesteps = self.data.attrs['sample_timesteps']
 
-
-    def get_data_indices(self, percent_train = 0.75):
+    def get_data_indices(self, percent_train = 0.90):
         data_indices = [int(key.lstrip('Sample')) for key in self.data]
         n = max(data_indices)
         n_train = int(percent_train*n)
@@ -40,49 +40,45 @@ class DataHandler:
         return [normalize_label[i] for i in data_labels]
     
     
-    def get_sample(self, data_point_name, data_features):
-        data_sample = np.zeros((4200,len(data_features)))
+    def get_sample(self, data_point_name, data_features, timesteps):
+        data_sample = np.zeros((timesteps,len(data_features)))
         for i,dim in enumerate(data_features):
             data_sample[:,i] = self.data[data_point_name][dim][:]
         return data_sample
     
     
-    def get_data(self, indices, data_features):
-        data_set = np.zeros((len(indices), 4200, len(data_features)))
+    def get_data(self, indices, data_features, timesteps):
+        data_set = np.zeros((len(indices), timesteps, len(data_features)))
         for i,index in enumerate(indices):
             data_set[i, :, :] = self.get_sample('Sample{}'.format(index),
-                                                data_features)
+                                                data_features, timesteps=timesteps)
         return data_set
 
 
-    def get_data_sets(self, data_features):
+    def get_data_sets(self, data_features, timesteps):
         """
-        Data comes in the form 
+        Data in the form:
         h5py.File
             -> Sample0
             -> Sample1
                 Attributes
                 Feature0
                 Feature1
-                .
-                .8
-                .
+                ...
                 FeatureN
-            .
-            .
-            .
+            ...
             ->SampleN
         """
 
         indices = self.get_data_indices()
         train_idx = indices['train']
         test_idx = indices['test']
-
+        print('TIMESTEPS = {}'.format(timesteps))
         return  {
-            'x_train' : self.get_data(train_idx, data_features),
+            'x_train': self.get_data(train_idx, data_features, timesteps),
             'y_train': self.get_labels(train_idx),
-            'x_test'  : self.get_data(test_idx, data_features),
-            'y_test': self.get_labels(test_idx)
+            'x_test' : self.get_data(test_idx, data_features, timesteps),
+            'y_test' : self.get_labels(test_idx)
         }
 
 
