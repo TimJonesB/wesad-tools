@@ -21,6 +21,7 @@ import os
 import numpy as np
 import pickle
 import h5py
+from datetime import datetime
 from feature_editing import FeatureDesigner
 
 class DataInfo:
@@ -46,18 +47,18 @@ class DataInfo:
             'TEMP' : 4
         }
     }
+    segment_duration = 10
+    valid_classes = (1,2)
 
-
-class CustomSettings:
-    segment_duration = 15 # seconds
-    valid_classes = (1, 2) # classes to include in analysis
+    def __init__(self):
+        now = datetime.now()
+        self.date = now.strftime("%d/%m/%Y %H:%M:%S")
 
 
 class DataProducer:
-    def __init__(self, data_filepath, data_info, custom_settings):
+    def __init__(self, data_filepath, data_info):
         self.data_filepath = data_filepath
         self.data_info = data_info
-        self.custom_settings = custom_settings
         with open(data_filepath, 'rb') as f:
             self.data = pickle.load(f, encoding='latin1')
 
@@ -133,23 +134,25 @@ class DataProducer:
         5/6/7 = should be ignored in this dataset
         """
         return (len(set(self.data['label'][i:i+steps_segment])) == 1 and
-                self.data['label'][i:i+steps_segment][0] in self.custom_settings.valid_classes)
+                self.data['label'][i:i+steps_segment][0] in self.data_info.valid_classes)
 
 
 if __name__ == '__main__':
     data_info = DataInfo()
-    custom_settings = CustomSettings()
     designer = FeatureDesigner()
 
-    steps_sample = data_info.label_data_fs * custom_settings.segment_duration
+    steps_sample = data_info.label_data_fs * data_info.segment_duration
 
     output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ),
                                                '..', 
                                                'data',
                                                'formatted_data_feat.h5'))
     with h5py.File(output_path, 'w') as fout:
-        fout.attrs['sample_count'] = 0
+        fout.attrs['date'] = data_info.date
+        fout.attrs['segment_duration_s'] = data_info.segment_duration
+        fout.attrs['classes'] = data_info.valid_classes
         fout.attrs['sample_timesteps'] = steps_sample
+        fout.attrs['sample_count'] = 0
         for idx in data_info.data_idx:
             data_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ),
                                                      '..',
@@ -159,7 +162,7 @@ if __name__ == '__main__':
                                                      'S{}.pkl'.format(idx)))
             print("Parsing {}".format(data_path))
 
-            producer = DataProducer(data_path, data_info, custom_settings)
+            producer = DataProducer(data_path, data_info)
 
             producer.upsample_wrist_data()
 

@@ -37,27 +37,27 @@ class FeatureDesigner:
 
     def acc_designer(self, feature_name, data):
         win_sz = self.chest_win_size 
-        # max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
-        # min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
+        max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
+        min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
         mean_filt = pd.Series(data).rolling(win_sz, min_periods=1).mean()
                
         return {
                 '{}Mean'.format(feature_name) :  mean_filt,
-                # '{}Max'.format(feature_name) : max,
-                # '{}Min'.format(feature_name) : data,
+                '{}Max'.format(feature_name) : max,
+                '{}Min'.format(feature_name) : data,
                }
 
 
     def wacc_designer(self, feature_name, data):
         win_sz = 5 
-        # max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
-        # min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
+        max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
+        min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
         mean_filt = pd.Series(data).rolling(win_sz, min_periods=1).mean()
                
         return {
                 '{}Mean'.format(feature_name) :  mean_filt,
-                # '{}Max'.format(feature_name) : max,
-                # '{}Min'.format(feature_name) : data,
+                '{}Max'.format(feature_name) : max,
+                '{}Min'.format(feature_name) : data,
                }
 
     def ecg_designer(self, feature_name, data):
@@ -66,33 +66,33 @@ class FeatureDesigner:
                
         return {
                 '{}Mean'.format(feature_name) :  mean_filt,
-                # '{}Std'.format(feature_name)  :  std_filt  
+                '{}Std'.format(feature_name)  :  std_filt  
                }
 
 
     def eda_designer(self, feature_name, data):
         win_sz = self.chest_win_size 
         mean_filt = pd.Series(data).rolling(win_sz, min_periods=1).mean()
-        # max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
-        # min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
+        max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
+        min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
                
         return {
                 '{}Mean'.format(feature_name) :  mean_filt,
-                # '{}Max'.format(feature_name)  : self.filt_nan(data, max_filt),
-                # '{}Min'.format(feature_name)  : self.filt_nan(data, min_filt),
+                '{}Max'.format(feature_name)  : self.filt_nan(data, max_filt),
+                '{}Min'.format(feature_name)  : self.filt_nan(data, min_filt),
                }
 
 
     def weda_designer(self, feature_name, data):
         win_sz = 3 
         mean_filt = pd.Series(data).rolling(win_sz, min_periods=1).mean()
-        # max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
-        # min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
+        max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
+        min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
                
         return {
                 '{}Mean'.format(feature_name) :  mean_filt,
-                # '{}Max'.format(feature_name)  : self.filt_nan(data, max_filt),
-                # '{}Min'.format(feature_name)  : self.filt_nan(data, min_filt),
+                '{}Max'.format(feature_name)  : self.filt_nan(data, max_filt),
+                '{}Min'.format(feature_name)  : self.filt_nan(data, min_filt),
                }
 
 
@@ -117,24 +117,24 @@ class FeatureDesigner:
     def temp_designer(self, feature_name, data):
         win_sz = self.chest_win_size
         mean_filt = pd.Series(data).rolling(win_sz, min_periods=1).mean()
-        # max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
-        # min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
+        max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
+        min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
         return {
                 '{}Mean'.format(feature_name) : mean_filt,
-                # '{}Max'.format(feature_name)  : data,
-                # '{}Min'.format(feature_name)  : data,
+                '{}Max'.format(feature_name)  : data,
+                '{}Min'.format(feature_name)  : data,
                }
 
 
     def wtemp_designer(self, feature_name, data):
         win_sz = 8 
         mean_filt = pd.Series(data).rolling(win_sz, min_periods=1).mean()
-        # max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
-        # min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
+        max_filt  = pd.Series(data).rolling(win_sz, min_periods=0).max()
+        min_filt  = pd.Series(data).rolling(win_sz, min_periods=0).min()
         return {
                 '{}Mean'.format(feature_name) : mean_filt,
-                # '{}Max'.format(feature_name)  : data,
-                # '{}Min'.format(feature_name)  : data,
+                '{}Max'.format(feature_name)  : data,
+                '{}Min'.format(feature_name)  : data,
                }
 
     
