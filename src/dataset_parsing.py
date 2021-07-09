@@ -48,7 +48,7 @@ class DataInfo:
             'TEMP' : 4
         }
     }
-    segment_duration = 5 
+    segment_duration = 10 
     valid_classes = (1,2)
 
     def __init__(self):
@@ -99,25 +99,13 @@ class DataProducer:
         Extracts segment specific to certain index range [i:i+steps_segment].
         """
         segment = {}
-        for sig in ['ACC']:#, 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
+        for sig in ['ACC', 'ECG']:#, 'EMG', 'EDA', 'Temp', 'Resp']:
             whole_series = self.data['signal']['chest'][sig]
-            #break down Accelerometer data into three seperate
-            #vectors ACC0, ACC1, etc
-            if whole_series.shape[1] > 1:
-                for i, vec in enumerate(whole_series.T):
-                     segment['chest'+sig+'{}'.format(i)] = vec[i:(i + steps_segment)]
-            else:
-                segment['chest' + sig] = whole_series[i:i+steps_segment, 0]
+            segment[f'chest{sig}'] = whole_series[i:(i + steps_segment)]
 
         for sig in []:#['ACC', 'EDA', 'TEMP']:
             whole_series = self.data['signal']['wrist_upsampled'][sig]
-            #break down Accelerometer data into three seperate vectors 
-            # ie ACC0, ACC1, ...
-            if whole_series.shape[1] > 1:
-                for i, vec in enumerate(whole_series.T):
-                     segment['wrist' + sig + '{}'.format(i)] = vec[i:(i + steps_segment)]
-            else:
-                segment['wrist' + sig] = whole_series[i:i+steps_segment, 0]
+            segment[f'wrist{sig}'] = whole_series[i:(i + steps_segment)]
 
         return segment
 
@@ -159,9 +147,9 @@ if __name__ == '__main__':
                                                      '..',
                                                      'data',
                                                      'WESAD',
-                                                     'S{}'.format(idx),
-                                                     'S{}.pkl'.format(idx)))
-            print("Parsing {}".format(data_path))
+                                                     f'S{idx}',
+                                                     f'S{idx}.pkl'))
+            print(f'Parsing {data_path}')
 
             producer = DataProducer(data_path, data_info)
 
@@ -171,7 +159,7 @@ if __name__ == '__main__':
 
                 if producer.is_valid_segment(i, steps_sample):
                     sample = producer.extract_segment(i, steps_sample)
-                    group_name = 'Sample{}'.format(fout.attrs['sample_count'])
+                    group_name = f'Sample{fout.attrs["sample_count"]}'
                     grp = fout.create_group(group_name)
 
                     grp.attrs['label'] = producer.data['label'][i:i+steps_sample][0]
@@ -183,5 +171,4 @@ if __name__ == '__main__':
 
                     fout.attrs['sample_count'] += 1
 
-        print(('Parsing complete,'
-               'number of samples = {}.').format(fout.attrs['sample_count']))
+        print(f'Parsing complete number of samples = {fout.attrs["sample_count"]}.')
