@@ -31,9 +31,10 @@ class DataInfo:
     :param: data_idx = sample labels
     :param: sampling_freq_hz = sampling frequency (hz) of data signals
     """
-    data_idx = ['2', '3', '4', '5', '6',
-                '7', '8', '9', '10', '11',
-                '13', '14', '15', '16', '17']
+    # data_idx = ['2', '3', '4', '5', '6',
+    #             '7', '8', '9', '10', '11',
+    #             '13', '14', '15', '16', '17']
+    data_idx = ['2','3','4']
     label_data_fs = 700
     fs_hz = { #see README
         'chest' : {
@@ -47,7 +48,7 @@ class DataInfo:
             'TEMP' : 4
         }
     }
-    segment_duration = 10
+    segment_duration = 5 
     valid_classes = (1,2)
 
     def __init__(self):
@@ -98,7 +99,7 @@ class DataProducer:
         Extracts segment specific to certain index range [i:i+steps_segment].
         """
         segment = {}
-        for sig in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
+        for sig in ['ACC']:#, 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
             whole_series = self.data['signal']['chest'][sig]
             #break down Accelerometer data into three seperate
             #vectors ACC0, ACC1, etc
@@ -108,7 +109,7 @@ class DataProducer:
             else:
                 segment['chest' + sig] = whole_series[i:i+steps_segment, 0]
 
-        for sig in ['ACC', 'EDA', 'TEMP']:
+        for sig in []:#['ACC', 'EDA', 'TEMP']:
             whole_series = self.data['signal']['wrist_upsampled'][sig]
             #break down Accelerometer data into three seperate vectors 
             # ie ACC0, ACC1, ...
@@ -139,7 +140,7 @@ class DataProducer:
 
 if __name__ == '__main__':
     data_info = DataInfo()
-    designer = FeatureDesigner()
+    designer = FeatureDesigner(data_info)
 
     steps_sample = data_info.label_data_fs * data_info.segment_duration
 
@@ -174,7 +175,6 @@ if __name__ == '__main__':
                     grp = fout.create_group(group_name)
 
                     grp.attrs['label'] = producer.data['label'][i:i+steps_sample][0]
-
                     for component in sample:
                         feat_vecs = designer.edit_feature(component,
                                                           sample[component])
