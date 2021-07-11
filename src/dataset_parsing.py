@@ -23,6 +23,7 @@ import pickle
 import h5py
 from datetime import datetime
 from feature_editing import FeatureDesigner
+import time
 
 class DataInfo:
     """
@@ -48,7 +49,7 @@ class DataInfo:
             'TEMP' : 4
         }
     }
-    segment_duration = 10 
+    segment_duration = 5 
     valid_classes = (1,2)
 
     def __init__(self):
@@ -99,7 +100,7 @@ class DataProducer:
         Extracts segment specific to certain index range [i:i+steps_segment].
         """
         segment = {}
-        for sig in ['ACC', 'ECG']:#, 'EMG', 'EDA', 'Temp', 'Resp']:
+        for sig in ['ECG']:#, 'EMG', 'EDA', 'Temp', 'Resp']:
             whole_series = self.data['signal']['chest'][sig]
             segment[f'chest{sig}'] = whole_series[i:(i + steps_segment)]
 
@@ -155,9 +156,10 @@ if __name__ == '__main__':
 
             producer.upsample_wrist_data()
 
+            t0 = time.time()
             for i in range(0, len(producer.data['label']), steps_sample):
-
                 if producer.is_valid_segment(i, steps_sample):
+                    print(f"extracting segment [{i} : {i+steps_sample}]")
                     sample = producer.extract_segment(i, steps_sample)
                     group_name = f'Sample{fout.attrs["sample_count"]}'
                     grp = fout.create_group(group_name)
@@ -170,5 +172,5 @@ if __name__ == '__main__':
                             grp.create_dataset(feat, data=feat_vecs[feat])
 
                     fout.attrs['sample_count'] += 1
-
+            print("Time = ", time.time()-t0)
         print(f'Parsing complete number of samples = {fout.attrs["sample_count"]}.')

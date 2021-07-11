@@ -12,6 +12,10 @@ import scipy.signal as sps
 import matplotlib.pyplot as plt
 import scipy.integrate as integrate
 from scipy.stats import linregress
+import biosppy
+import pyhrv.tools as tools
+from hrvanalysis import get_geometrical_features #tinn index method is broken in pyhrv so use this
+
 
 class FeatureDesigner:
     """
@@ -49,17 +53,30 @@ class FeatureDesigner:
         mean_filt1 = pd.Series(data[:,1]).rolling(win_sz, min_periods=1).mean()
         std_filt1 = pd.Series(data[:,1]).rolling(win_sz, min_periods=1).std()
         fq_filt1 = self.maxf_filter(data[:,1], self.cfg.fs_hz['chest']['ACC'])
+        int_filt1 = pd.Series(data[:,1]).rolling(10, min_periods= 1).apply(integrate.trapz)
         mean_filt2 = pd.Series(data[:,2]).rolling(win_sz, min_periods=1).mean()
         std_filt2 = pd.Series(data[:,2]).rolling(win_sz, min_periods=1).std()
         fq_filt2 = self.maxf_filter(data[:,2], self.cfg.fs_hz['chest']['ACC'])
+        int_filt2 = pd.Series(data[:,2]).rolling(10, min_periods= 1).apply(integrate.trapz)
         mean_filt = mean_filt0 + mean_filt1 + mean_filt2
         std_filt = std_filt0 + std_filt1 + std_filt2
+        int_filt = int_filt0 + int_filt1 + int_filt2
         return {
                 f'{feature_name}Mean'  :  mean_filt,
                 f'{feature_name}Std'   :  std_filt,
+                f'{feature_name}Int'   :  int_filt,
                 f'{feature_name}0Mean' :  mean_filt0,
                 f'{feature_name}0Std'  :  std_filt0,
                 f'{feature_name}0Freq' :  fq_filt0,
+                f'{feature_name}0Int'  :  int_filt0,
+                f'{feature_name}1Mean' :  mean_filt1,
+                f'{feature_name}1Std'  :  std_filt1,
+                f'{feature_name}1Freq' :  fq_filt1,
+                f'{feature_name}1Int'  :  int_filt1,
+                f'{feature_name}2Mean' :  mean_filt2,
+                f'{feature_name}2Std'  :  std_filt2,
+                f'{feature_name}2Freq' :  fq_filt2,
+                f'{feature_name}2Int'  :  int_filt2,
                }
 
     # def wacc_designer(self, feature_name, data):
@@ -89,11 +106,20 @@ class FeatureDesigner:
         win_sz = self.cfg.fs_hz['chest']['ECG'] * self.chest_win_duration
         mean_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).mean()
         std_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).std()
-               
+        out = biosppy.signals.ecg.ecg(data[:,0], sampling_rate=700, show=False)
+        hr = out['heart_rate']
+        hrv = tools.nn_intervals(out['rpeaks']) # NNI 
+        tinn = get_geometrical_features(hrv)['triangular_index'] * np.ones(len(data[:,0]))
+        mean_hr = pd.Series(hr).rolling(win_sz, min_periods=1).mean()
+        mean_hrv = pd.Series(hrv).rolling(win_sz, min_periods=1).mean()
+        std_hr = pd.Series(hr).rolling(win_sz, min_periods=1).std()
+        std_hrv = pd.Series(hrv).rolling(win_sz, min_periods=1).std()
+        hrv_diff = np.array([v - hrv[i-1] for i, v in enumerate(hrv[1:])])
         return {
-                f'{feature_name}Mean' :  mean_filt,0
-
-                f'{feature_name}Std'  :  std_filt  
+                f'{feature_name}MeanHR' :  mean_hr,
+                f'{feature_name}StdHR'  :  std_hr,  
+                f'{feature_name}MeanHRV' :  mean_hrv,
+                f'{feature_name}StdHRV'  :  std_hrv,  
                }
 
 
