@@ -23,6 +23,7 @@ import pickle
 import h5py
 from datetime import datetime
 from feature_editing import FeatureDesigner
+import time
 
 class DataInfo:
     """
@@ -31,9 +32,10 @@ class DataInfo:
     :param: data_idx = sample labels
     :param: sampling_freq_hz = sampling frequency (hz) of data signals
     """
-    data_idx = ['2', '3', '4', '5', '6',
-                '7', '8', '9', '10', '11',
-                '13', '14', '15', '16', '17']
+    data_idx = ['2', '3', '4', '5', '6',]
+                # '7', '8', '9', '10', '11',
+                # '13', '14', '15', '16', '17']
+    # data_idx = ['2','3']
     label_data_fs = 700
     fs_hz = { #see README
         'chest' : {
@@ -47,8 +49,6 @@ class DataInfo:
             'TEMP' : 4
         }
     }
-    segment_duration = 10
-    valid_classes = (1,2)
 
     def __init__(self):
         now = datetime.now()
@@ -56,132 +56,47 @@ class DataInfo:
 
 
 class DataProducer:
+
     def __init__(self, data_filepath, data_info):
         self.data_filepath = data_filepath
         self.data_info = data_info
         with open(data_filepath, 'rb') as f:
-            self.data = pickle.load(f, encoding='latin1')
+            self.data = pickle.load(f, encoding='latin1' )
+        self.designer = FeatureDesigner(data_info, common_hz=700, common_len=len(self.data['label']))
 
 
-    def upsample_wrist_data(self, label_fs=700):
-        """
-        Function to upsample wrist data (see sampling_freq_hz dictionary for 
-        original sampling rate) to the sampling rate of label data and chest 
-        data (both at 700hz).
-        
-        :param: data : data from data file
-        :param: label_fs : sampling rate of label and chest data
-        """
-
-        wrist_data = self.data['signal']['wrist']
-        labels = self.data['label']
-        upsampled_wrist_data = {}
-
-        for signal_name in wrist_data:
-            signal = wrist_data[signal_name]
-            fs = self.data_info.fs_hz['wrist'][signal_name]
-            time_upsamp = np.arange(0, len(labels)*(1/label_fs), 1/label_fs)
-            time_signal = np.arange(0, len(signal)*(1/fs), 1/fs)
-
-            # Able to handle multidimensional data ie 'ACC' (Accelerometer)
-            sig_upsamp = np.zeros((len(labels), signal.shape[1]))
-            for i, sig in enumerate(signal.T):
-                sig_upsamp[:, i] = np.interp(time_upsamp, time_signal, sig)
-            upsampled_wrist_data[signal_name] = sig_upsamp
-
-        self.data['signal']['wrist_upsampled'] = upsampled_wrist_data
-        return upsampled_wrist_data
-    
-    
-    def extract_segment(self, i, steps_segment):
-        """
-        Extracts segment specific to certain index range [i:i+steps_segment].
-        """
-        segment = {}
-        for sig in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']:
-            whole_series = self.data['signal']['chest'][sig]
-            #break down Accelerometer data into three seperate
-            #vectors ACC0, ACC1, etc
-            if whole_series.shape[1] > 1:
-                for i, vec in enumerate(whole_series.T):
-                     segment['chest'+sig+'{}'.format(i)] = vec[i:(i + steps_segment)]
-            else:
-                segment['chest' + sig] = whole_series[i:i+steps_segment, 0]
-
-        for sig in ['ACC', 'EDA', 'TEMP']:
-            whole_series = self.data['signal']['wrist_upsampled'][sig]
-            #break down Accelerometer data into three seperate vectors 
-            # ie ACC0, ACC1, ...
-            if whole_series.shape[1] > 1:
-                for i, vec in enumerate(whole_series.T):
-                     segment['wrist' + sig + '{}'.format(i)] = vec[i:(i + steps_segment)]
-            else:
-                segment['wrist' + sig] = whole_series[i:i+steps_segment, 0]
-
-        return segment
-
-
-    def is_valid_segment(self, i, steps_segment):
-        """
-        Checks that segment has no label/state change and that there are no
-        invalid labels (ie 0, 5, 6, 7)
-
-        0 = not defined / transient,
-        1 = baseline,
-        2 = stress,
-        3 = amusement,
-        4 = meditation,
-        5/6/7 = should be ignored in this dataset
-        """
-        return (len(set(self.data['label'][i:i+steps_segment])) == 1 and
-                self.data['label'][i:i+steps_segment][0] in self.data_info.valid_classes)
+    def parse(self):
+        feat_vecs = {}
+        for component in ([('chest', feat) for feat in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']] +
+                          [('wrist', feat) for feat in ['ACC', 'BVP', 'EDA', 'TEMP']]):
+            print(f'Parsing {component[0]}{component[1]} data')
+            feat_vecs.update( self.designer.edit_feature(f'{component[0]}{component[1]}',
+                                                   self.data['signal'][component[0]][component[1]]) )
+        return feat_vecs
 
 
 if __name__ == '__main__':
-    data_info = DataInfo()
-    designer = FeatureDesigner()
-
-    steps_sample = data_info.label_data_fs * data_info.segment_duration
-
     output_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ),
                                                '..', 
                                                'data',
                                                'formatted_data_feat.h5'))
+    data_info = DataInfo()
     with h5py.File(output_path, 'w') as fout:
         fout.attrs['date'] = data_info.date
-        fout.attrs['segment_duration_s'] = data_info.segment_duration
-        fout.attrs['classes'] = data_info.valid_classes
-        fout.attrs['sample_timesteps'] = steps_sample
-        fout.attrs['sample_count'] = 0
         for idx in data_info.data_idx:
             data_path = os.path.abspath(os.path.join(os.path.dirname( __file__ ),
-                                                     '..',
-                                                     'data',
-                                                     'WESAD',
-                                                     'S{}'.format(idx),
-                                                     'S{}.pkl'.format(idx)))
-            print("Parsing {}".format(data_path))
-
-            producer = DataProducer(data_path, data_info)
-
-            producer.upsample_wrist_data()
-
-            for i in range(0, len(producer.data['label']), steps_sample):
-
-                if producer.is_valid_segment(i, steps_sample):
-                    sample = producer.extract_segment(i, steps_sample)
-                    group_name = 'Sample{}'.format(fout.attrs['sample_count'])
-                    grp = fout.create_group(group_name)
-
-                    grp.attrs['label'] = producer.data['label'][i:i+steps_sample][0]
-
-                    for component in sample:
-                        feat_vecs = designer.edit_feature(component,
-                                                          sample[component])
-                        for feat in feat_vecs:
-                            grp.create_dataset(feat, data=feat_vecs[feat])
-
-                    fout.attrs['sample_count'] += 1
-
-        print(('Parsing complete,'
-               'number of samples = {}.').format(fout.attrs['sample_count']))
+                                                    '..',
+                                                    'data',
+                                                    'WESAD',
+                                                    f'S{idx}',
+                                                    f'S{idx}.pkl'))
+            print(f'Parsing {data_path}')
+            t0 = time.time()
+            grp = fout.create_group(f'S{idx}')
+            dp = DataProducer(data_path, data_info)
+            feat_vecs = dp.parse()
+            for feat in feat_vecs:
+                print(feat)
+                grp.create_dataset(feat, data=feat_vecs[feat])
+            grp.create_dataset('label', data= dp.data['label'])
+            print("Time = ", time.time()-t0)

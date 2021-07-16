@@ -35,7 +35,7 @@ class DataHandler:
     def get_labels(self, indices):
         data_labels = np.zeros(len(indices))
         for i, index in enumerate(indices):
-            data_labels[i] = self.data['Sample{}'.format(index)].attrs['label']
+            data_labels[i] = self.data[f'Sample{index}'].attrs['label']
         data_labels_list = list(set(data_labels))
         normalize_label = {data_labels_list[i]: i for i in range(
                                                         len(data_labels_list))}
@@ -52,7 +52,7 @@ class DataHandler:
     def get_data(self, indices, data_features):
         data_set = np.zeros((len(indices), self.timesteps, len(data_features)))
         for i,index in enumerate(indices):
-            data_set[i, :, :] = self.get_sample('Sample{}'.format(index),
+            data_set[i, :, :] = self.get_sample('Sample{index}',
                                                 data_features)
         return data_set
 
@@ -75,7 +75,7 @@ class DataHandler:
         indices = self.get_data_indices()
         train_idx = indices['train']
         test_idx = indices['test']
-        print('TIMESTEPS = {}'.format(self.timesteps))
+        print(f'TIMESTEPS = {self.timesteps}')
         return  {
             'x_train': self.get_data(train_idx, data_features),
             'y_train': self.get_labels(train_idx),
