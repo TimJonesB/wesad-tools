@@ -1,5 +1,7 @@
 # wesad-tools
-- WESAD data processing tools
+- WESAD (Wearable Stress and Affect Detection) is a multivariate timeseries dataset
+- wesad-tools contains WESAD data processing tools which prepares the data for timeseries classification
+- wesad-tools also contains an XGBOOST classification prototype in src/sandbox.ipynb
 - Subset of features from Table 1 in [1] implemented
 - Features matching when possible to spec described in [1]
 - See src/sandbox notebook for XGBoost demo
