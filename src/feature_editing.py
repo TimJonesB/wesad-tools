@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan  1 17:48:25 2020
-
-@author: tim
+This file contains the factory class FeatureDesigner which returns vectors of processed "rolling" stastical measurements of the raw sensor signals.
 """
 
 import numpy as np
@@ -11,21 +9,27 @@ import pandas as pd
 import scipy.signal as sps
 import scipy.interpolate as spi
 import scipy.integrate as integrate
-from scipy.stats import linregress
 import matplotlib.pyplot as plt
 import biosppy
 import pyhrv.tools as tools
 from hrvanalysis import get_geometrical_features #tinn index method is broken in pyhrv so use this
 
-
+"""
+@brief Factory class which returns vectors of processed "rolling" stastical measurements of the raw sensor signals.
+Feature designer returns a variable number of processed time series vectors off of a raw input signal. The class method edit_feature dispatches to the method mapped to the feature being processed.
+"""
 class FeatureDesigner:
-    """
-    * Edit feature dispatches to specific designer method based on feature name.
-    * {feature_name}designer returns any number of custom features.
-    """
-    # for feature moving window size
+    # For feature moving window size:
     other_win_duration = 60 # seconds
     chest_win_duration = 5 # seconds
+
+    """
+    @brief init method for FuturDesigner stores off configuration data
+    @param self class instance
+    @param cfg_info common configuration info from dataset_parsing.py
+    @param common_hz common sampling rate to process data at (default: 700hz)
+    @param common_len common number of time steps at common_hz shared by each feature within the sample being processed
+    """
     def __init__(self, cfg_info, common_hz=700, common_len=None):
         self.cfg = cfg_info
         self.common_hz = common_hz
@@ -33,6 +37,13 @@ class FeatureDesigner:
         self.common_ts = np.arange(0, 1/(self.common_hz)*self.common_len, 1/(self.common_hz))
 
 
+    """
+    @brief FeatureDesigner's factory method deploys to method mapped to feature name.
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def edit_feature(self, feature_name, data):
         designer_map = {
                         'chestACC'  : self.acc_designer,
@@ -49,6 +60,13 @@ class FeatureDesigner:
         return designer_map[feature_name](feature_name, data)
 
 
+    """
+    @brief FeatureDesigner method for chest acceleration data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def acc_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['chest']['ACC'] * self.chest_win_duration
 
@@ -84,6 +102,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for wrist acceleration data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def wacc_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['wrist']['ACC'] * self.other_win_duration
         max_filt  = pd.Series(data[:,0]).rolling(win_sz, min_periods=0).max()
@@ -96,6 +121,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for chest ECG data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def ecg_designer(self, feature_name, data):
 
         def get_hr_metrics(x, metric, sampling_rate=700):
@@ -147,6 +179,13 @@ class FeatureDesigner:
                 }
 
 
+    """
+    @brief FeatureDesigner method for wrist BVP data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def wbvp_designer(self, feature_name, data):
         def get_bvp_metrics(x, metric, sampling_rate=64):
             if metric == 'hr_mean':
@@ -204,6 +243,13 @@ class FeatureDesigner:
                 }
 
 
+    """
+    @brief FeatureDesigner method for chest EDA data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def eda_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['chest']['EDA'] * self.chest_win_duration
         mean_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).mean()
@@ -219,6 +265,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for wrist EDA data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def weda_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['wrist']['EDA'] * self.chest_win_duration
         mean_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).mean()
@@ -237,6 +290,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for chest EMG data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def emg_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['chest']['EMG'] * self.chest_win_duration
         mean_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).mean()
@@ -250,6 +310,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for chest RESP data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def resp_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['chest']['Resp'] * self.chest_win_duration
         return {
@@ -257,6 +324,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for chest TEMP data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def temp_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['chest']['Temp'] * self.chest_win_duration
         mean_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).mean()
@@ -271,6 +345,13 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner method for wrist TEMP data
+    @param self class instance
+    @param feature_name feature string literal identifier
+    @param data input raw data of shape (ntimesteps, nchannels)
+    @returns variable number of feature vectors returned by feature-specific designer/processing method
+    """
     def wtemp_designer(self, feature_name, data):
         win_sz = self.cfg.fs_hz['wrist']['TEMP'] * self.other_win_duration
         mean_filt = pd.Series(data[:,0]).rolling(win_sz, min_periods=1).mean()
@@ -289,6 +370,12 @@ class FeatureDesigner:
                }
 
 
+    """
+    @brief FeatureDesigner utility method for extracting the dominant non-zero frequency via fft
+    @param self class instance
+    @param signal timeseries chunk
+    @returns dominant non-zero frequency for period of signal
+    """
     def dom_nonzero_freq(self, signal, fs_hz):
         """
         Returns most dominant non-zero frequency via fft
@@ -300,6 +387,16 @@ class FeatureDesigner:
         return abs(f1) if abs(f1) > 0 else abs(f2)
 
 
+    """
+    @brief FeatureDesigner utility method for upsampling data with zero-order interpolation.
+    Zero-order interpolation is chosen to simulate a "update if new data else keep processing previous value" real-time scenario.
+    @param self class instance
+    @param signal timeseries chunk
+    @param fs sampling being upsampled
+    @param custom_ts custom time stamps to upsample to
+    @param kind type of interpolation (Default: zero)
+    @returns upsampled signal to custom_ts points
+    """
     def upsample_data(self, signal, fs, custom_ts, kind='zero'):
         """
         Upsamples data to custom ts
@@ -309,6 +406,17 @@ class FeatureDesigner:
         return data_lookup(custom_ts)
 
 
+    """
+    @brief FeatureDesigner utility method for timeseries rolling/widowed calculations with stride
+    @param self class instance
+    @param data timeseries chunk
+    @param fs original sampling frequency of "data"
+    @param win_sz size of window in rolling calculation
+    @param skip size of stride between windows (Default: 1). Defaults to no stride.
+    @param upsample whether or not to upsample
+    @param apply method object to apply to window
+    @returns upsampled signal to custom_ts points
+    """
     def rolling_skip(self, data, fs, win_sz, skip=1, upsample=True, apply=None, **kwargs):
         """
         Like pd.Rolling() but with stride

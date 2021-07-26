@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 """
-Created on Mon Nov  4 11:26:12 2019
-
-@author: tim
-
 https://archive.ics.uci.edu/ml/datasets/WESAD+%28Wearable+Stress+and+Affect+Detection%29
 [1] Philip Schmidt, Attila Reiss, Robert Duerichen, Claus Marberger and Kristof Van Laerhoven. 2018. 
 Introducing WESAD, a multimodal dataset for Wearable Stress and Affect Detection. In 2018 International 
@@ -25,18 +22,18 @@ from datetime import datetime
 from feature_editing import FeatureDesigner
 import time
 
+"""
+@brief DataInfo contains configuration information about WESAD data. See paper in README for more information.
+@todo Use a standalone configuration file instead of a built in class
+"""
 class DataInfo:
-    """
-    Data information from readme.
-    
-    :param: data_idx = sample labels
-    :param: sampling_freq_hz = sampling frequency (hz) of data signals
-    """
-    data_idx = ['2', '3', '4', '5', '6',]
-                # '7', '8', '9', '10', '11',
-                # '13', '14', '15', '16', '17']
-    # data_idx = ['2','3']
+    # Index of subject. Each subject has a variable length of sample data. Some numbers skipped per data source recommendation.
+    data_idx = ['2', '3', '4', '5', '6',
+                '7', '8', '9', '10', '11',
+                '13', '14', '15', '16', '17']
+    # Sampling frequency of label data
     label_data_fs = 700
+    # Sampling frequency of chest and wrist sensor data streams
     fs_hz = { #see README
         'chest' : {
             signal : 700 for signal in ['ACC', 'ECG', 'EMG',
@@ -49,14 +46,23 @@ class DataInfo:
             'TEMP' : 4
         }
     }
-
+    # Saves off generation datetime for reference
     def __init__(self):
         now = datetime.now()
         self.date = now.strftime("%d/%m/%Y %H:%M:%S")
 
 
+"""
+@brief DataProducer handles the reading and parsing of subject data streams one subject at a time
+"""
 class DataProducer:
 
+    """
+    @brief init method for DataProducer loads in data and creates a FeatureDesigner instance member
+    @param self class instance
+    @param data_filepath file path to subject datafile
+    @param data_info instance of data info configuration data
+    """
     def __init__(self, data_filepath, data_info):
         self.data_filepath = data_filepath
         self.data_info = data_info
@@ -65,6 +71,11 @@ class DataProducer:
         self.designer = FeatureDesigner(data_info, common_hz=700, common_len=len(self.data['label']))
 
 
+    """
+    @brief parse calls FeatureDesigner feature-by-feature and saves off feature vectors
+    @param self class instance
+    @returns feature vectors for all features for the subject
+    """
     def parse(self):
         feat_vecs = {}
         for component in ([('chest', feat) for feat in ['ACC', 'ECG', 'EMG', 'EDA', 'Temp', 'Resp']] +
