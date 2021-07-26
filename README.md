@@ -5,6 +5,7 @@
 - Subset of features from Table 1 in [1] implemented
 - Features matching when possible to spec described in [1]
 - See src/sandbox notebook for XGBoost demo
+- See requirements.txt for minimum environment reqs
 
 https://archive.ics.uci.edu/ml/datasets/WESAD+%28Wearable+Stress+and+Affect+Detection%29
 
